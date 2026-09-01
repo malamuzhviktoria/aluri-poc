@@ -3,15 +3,15 @@ import * as React from 'react';
 import { Platform, useWindowDimensions, View } from 'react-native';
 
 /**
- * Development-only iPhone frame for the desktop web preview. Wraps the app
- * so it reads as a physical device while working on it in a browser —
- * purely presentational, not part of the shipped product.
+ * Constrains every web build (local dev AND production, e.g. the Netlify
+ * deployment) to a fixed phone-width viewport, centered on a neutral page
+ * background, so it never responsively stretches to the browser's width —
+ * this is a mobile-app prototype, not a responsive website.
  *
- * Skips the frame entirely (renders children plain, full-bleed) when:
- * - not on web (native already has a real device/simulator frame)
- * - not a dev build (__DEV__ false)
- * - the window itself is already phone-sized (someone previewing on an
- *   actual mobile browser shouldn't see a fake phone around their phone)
+ * On a large-enough desktop window, dev builds additionally get a
+ * decorative iPhone bezel (notch, home indicator, rounded frame) on top of
+ * that same fixed-width screen — purely a local convenience for working in
+ * a browser, not part of the shipped product.
  */
 
 const SCREEN_WIDTH = 440;
@@ -23,15 +23,35 @@ const ISLAND_WIDTH = 126;
 const ISLAND_HEIGHT = 37;
 const HOME_INDICATOR_WIDTH = 134;
 const HOME_INDICATOR_HEIGHT = 5;
-const MIN_WINDOW_WIDTH = 768;
+const MIN_WINDOW_WIDTH_FOR_BEZEL = 768;
 const OUTER_MARGIN = 96;
+const PAGE_BACKGROUND = '#F2F1EE';
 
 export function DevicePreview({ children }: { children: React.ReactNode }) {
   const { width: winW, height: winH } = useWindowDimensions();
-  const showFrame = Platform.OS === 'web' && __DEV__ && winW >= MIN_WINDOW_WIDTH;
 
-  if (!showFrame) {
+  if (Platform.OS !== 'web') {
     return <View style={{ flex: 1 }}>{children}</View>;
+  }
+
+  const showBezel = __DEV__ && winW >= MIN_WINDOW_WIDTH_FOR_BEZEL;
+
+  if (!showBezel) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', backgroundColor: PAGE_BACKGROUND }}>
+        <View
+          style={{
+            width: SCREEN_WIDTH,
+            minWidth: SCREEN_WIDTH,
+            maxWidth: SCREEN_WIDTH,
+            flex: 1,
+            backgroundColor: '#fff',
+            overflow: 'hidden',
+          }}>
+          {children}
+        </View>
+      </View>
+    );
   }
 
   const outerW = SCREEN_WIDTH + BEZEL * 2;
@@ -39,7 +59,7 @@ export function DevicePreview({ children }: { children: React.ReactNode }) {
   const scale = Math.min(1, (winW - OUTER_MARGIN) / outerW, (winH - OUTER_MARGIN) / outerH);
 
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F2F1EE' }}>
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: PAGE_BACKGROUND }}>
       <View style={{ width: outerW * scale, height: outerH * scale }}>
         <View
           style={{
