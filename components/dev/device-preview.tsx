@@ -8,10 +8,13 @@ import { Platform, useWindowDimensions, View } from 'react-native';
  * background, so it never responsively stretches to the browser's width —
  * this is a mobile-app prototype, not a responsive website.
  *
- * On a large-enough desktop window, dev builds additionally get a
- * decorative iPhone bezel (notch, home indicator, rounded frame) on top of
- * that same fixed-width screen — purely a local convenience for working in
- * a browser, not part of the shipped product.
+ * On a large-enough desktop window, it additionally renders a decorative
+ * iPhone bezel (notch, home indicator, rounded frame) around that same
+ * fixed-width screen, on both local and production web builds, so the
+ * deployed site presents identically to the local preview. Below that
+ * width it falls back to the plain fixed-width screen with no bezel —
+ * e.g. someone opening the site on an actual mobile browser shouldn't see
+ * a fake phone frame around their real one.
  */
 
 const SCREEN_WIDTH = 440;
@@ -34,7 +37,7 @@ export function DevicePreview({ children }: { children: React.ReactNode }) {
     return <View style={{ flex: 1 }}>{children}</View>;
   }
 
-  const showBezel = __DEV__ && winW >= MIN_WINDOW_WIDTH_FOR_BEZEL;
+  const showBezel = winW >= MIN_WINDOW_WIDTH_FOR_BEZEL;
 
   if (!showBezel) {
     return (
